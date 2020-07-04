@@ -1,0 +1,14 @@
+{
+  "name": "imageshrink",
+  "version": "1.0.0",
+  "description": "App to optimize images\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[Desktop app to optimize images",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "shafi",
+  "license": "MIT",
+  "dependencies": {
+    "electron": "^9.0.5"
+  }
+}
