@@ -4,11 +4,13 @@
   "description": "App to optimize images\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[Desktop app to optimize images",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dev": "nodemon --exec electron ."
   },
   "author": "shafi",
   "license": "MIT",
   "dependencies": {
-    "electron": "^9.0.5"
+    "electron": "^9.0.5",
+    "nodemon": "^2.0.4"
   }
 }
