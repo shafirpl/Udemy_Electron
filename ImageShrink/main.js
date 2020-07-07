@@ -27,7 +27,13 @@ createMainWindow = () => {
         height: 600,
         icon: `${__dirname}/assets/icons/Icon_256x256.png`,
         resizable: isDev,
-        backgroundColor: 'white'
+        backgroundColor: 'white',
+        // we need to do this 
+        // https://www.udemy.com/course/electron-from-scratch/learn/lecture/19824022#questions/10984112
+        // watch from 1:15
+        webPreferences: {
+            nodeIntegration: true,
+        },
     })
     /*
     * after creating the main window, here we are pointing our 
