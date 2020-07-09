@@ -1,8 +1,15 @@
 // console.log("Hello World")
-const {app, BrowserWindow, Menu, globalShortcut} = require('electron');
+const {app, BrowserWindow, Menu, globalShortcut, ipcMain, shell} = require('electron');
+const path = require('path')
+const os = require('os')
+const imagemin = require('imagemin')
+const imageminMozjpeg = require("imagemin-mozjpeg");
+const imageminPngQuant = require("imagemin-pngquant");
+const slash = require('slash')
+const log = require('electron-log')
 
 // this sets the environment and we need to set it to production after we are done
-process.env.NODE_ENV = 'development';
+process.env.NODE_ENV = 'production';
 
 // checks if we are in production mode
 const isDev = process.env.NODE_ENV !== 'production' ? true: false;
@@ -31,6 +38,8 @@ createMainWindow = () => {
         // we need to do this 
         // https://www.udemy.com/course/electron-from-scratch/learn/lecture/19824022#questions/10984112
         // watch from 1:15
+        // it basically allows us to write a bit of nodejs in our index.html file, or in other words, it integrates 
+        // nodejs in our index.html file
         webPreferences: {
             nodeIntegration: true,
         },
@@ -121,7 +130,7 @@ app.on('ready', () => {
 const menu = [
     ... (isMac ? [
         { 
-            lable: app.name,
+            label: app.name,
             submenu: [
                 {
                     label: 'About',
@@ -153,6 +162,43 @@ const menu = [
     }]: [] )
 ]
 
+// processing the file sent here from index.html, the id in opcRenderer has to be exact match
+ipcMain.on("image:minimize", (e, options) => {
+    console.log(options)
+    options.dest = path.join(os.homedir(), "imageshrink");
+    shrinkImage(options);
+});
+
+// shirnking image stuff
+const shrinkImage = async ({imgPath,quality,dest}) => {
+    try {
+        // we use different plugin for different image type, imageminMozjpeg for jpeg, PNGQUANT for png etc
+        // in png we have to have values in 0.1-1.0 range, that is why we need to divide it by 100
+        const pngQuality = quality/100
+        // we use slash to avoid issues in windows path due to forward and backward slash
+        // this basically shrinks the image
+        // we use async because it takes some time to get the file
+        console.log(imgPath)
+        const files = await imagemin([slash(imgPath)],{
+            destination: dest,
+            plugins: [
+                imageminMozjpeg({quality}),
+                imageminPngQuant({
+                    quality: [pngQuality,pngQuality]
+                })
+            ]
+        })
+        console.log(files)
+        log.info(files)
+        // this opens the destination folder
+        shell.openPath(dest)
+        // we are sending event from here to our front-end html file letting them know its done
+        mainWindow.webContents.send('image:done')
+    } catch (error) {
+        console.log(error)
+        log.error(error)
+    }
+}
 
 // some macOs stuff
 // Quit when all windows are closed, except on macOS. There, it's common

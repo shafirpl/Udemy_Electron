@@ -56,12 +56,50 @@
     <script>
       const path = require("path");
       const os = require("os");
+      const {ipcRenderer}= require("electron")
+      const form = document.getElementById('image-form')
+      const slider = document.getElementById('slider')
+      const img = document.getElementById('img')
 
       document.getElementById("output-path").innerText = path.join(
         os.homedir(),
         "imageshrink"
       );
       console.log(os.homedir());
+      // on submit
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        /* 
+        * we grab the provided/inputted file using the file id (search for file and we will see that input type file has the id
+        * img), since we are only grabbing one file, we grab the first one so index 0
+        * 
+        */
+        const imgPath = img.files[0].path
+        const quality = slider.value
+        /*
+        * this takes 2 arguments, the first one is an identifier (similar to id in html), for which we 
+        * can use whatever we want , the second one is optional and its the data we wanna send
+        * We will process it in main.js
+        */
+        ipcRenderer.send('image:minimize', {
+          imgPath,
+          quality
+        })
+      })
+      // on done, we will get an event back from main.js file
+      /*
+      * it also takes 2 arguments, an identifier and optional received data, then we can call
+      * a call back to do whatever we like
+      * since we didn't pass any optional data, we just have the identifier and call back
+      * The M.toast is coming from materialize framework
+      */
+      ipcRenderer.on("image:done", ()=> {
+        M.toast(
+          {
+            html: `image resized to ${slider.value}% quality`
+          }
+        )
+      })
     </script>
   </body>
 </html>
