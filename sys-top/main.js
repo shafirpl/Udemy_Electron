@@ -1,8 +1,8 @@
-const { app, BrowserWindow, Menu, ipcMain, Tray } = require('electron')
+const { app, BrowserWindow, Menu, ipcMain, Tray } = require("electron");
 const log = require('electron-log')
 const Store = require('./Store')
 const path = require('path')
-
+const MainWindow = require('./MainWindow.js')
 // Set env
 process.env.NODE_ENV = 'development'
 // process.env.NODE_ENV = "production";
@@ -26,27 +26,54 @@ const store = new Store({
   }
 })
 
-function createMainWindow() {
-  mainWindow = new BrowserWindow({
-    title: 'APP NAME',
-    width: isDev ? 800 : 500,
-    height: 600,
-    icon: `${__dirname}/assets/icons/icon.png`,
-    resizable: isDev ? true : false,
-    backgroundColor: 'white',
-    webPreferences: {
-      nodeIntegration: true,
-      enableRemoteModule: true
-    },
-  })
+/*
+* Here we are creating the main window of our app, which
+* will create the frame inside which our app will be hosted
+* in windows, the icon option will replace standard electron icon with provided icon
+* in the bottom bar (uncomment the line to see the effect)
+* now why we need to do dirname in icon?
+* https://www.udemy.com/course/electron-from-scratch/learn/lecture/20050728#questions
+* later we moved this functionality to MainWindow class
+*/
 
-  if (isDev) {
-    mainWindow.webContents.openDevTools()
-  }
+// function createMainWindow() {
+//   mainWindow = new BrowserWindow({
+//     title: 'APP NAME',
+//     width: isDev ? 800 : 500,
+//     height: 600,
+//     icon: `${__dirname}/assets/icons/icon.png`,
+//     resizable: isDev ? true : false,
+//     backgroundColor: 'white',
+//     webPreferences: {
+//       nodeIntegration: true,
+//       enableRemoteModule: true
+//     },
+//   })
 
-  mainWindow.loadFile('./app/index.html')
+  function createMainWindow() {
+  mainWindow = new MainWindow("./app/index.html", isDev);
+
+  // if (isDev) {
+  //   // open up the dev tools if we are in development mode
+  //   mainWindow.webContents.openDevTools()
+  // }
+
+    /*
+    * after creating the main window, here we are pointing our 
+    * app to host the file,
+    * Here the title of the index.html file will overwrite the
+    * title we defined in the BrowserWindow constructor
+    * Later we tell the app to do this inside MainWindow.js file
+    */
+
+  // mainWindow.loadFile('./app/index.html')
 }
 
+/*
+* when the app is ready, do stuff
+* here we will create the main window as soon as the app is ready, and then send the settings we stored 
+* to the main window
+*/
 app.on('ready', () => {
   createMainWindow()
   mainWindow.webContents.on('dom-ready', () => {
@@ -54,7 +81,7 @@ app.on('ready', () => {
   })
 
   
-
+  // creates the menu, on mac it is on top left bar
   const mainMenu = Menu.buildFromTemplate(menu)
   Menu.setApplicationMenu(mainMenu)
 
@@ -108,6 +135,15 @@ const menu = [
   {
     role: 'fileMenu',
   },
+  {
+    label: 'View',
+    submenu: [
+      {
+        label: 'Toggle Navigation',
+        click: () => mainWindow.webContents.send('nav:toggle'),
+      }
+    ]
+  },
   ...(isDev
     ? [
         {
@@ -124,8 +160,16 @@ const menu = [
 ]
 
 // Set settings
+/*
+* this will fire up whenever we receive an event named 'settings:set' from our index.html file, around line 87 in
+* that file it sends the event
+*/
+
 ipcMain.on('settings:set', (e, value) => {
   store.set('settings', value)
+   // this will send an event with name "settings:get", that we will
+   // deal with in index.html file using ipcRenderer.on method, and
+   // the values of setting
    mainWindow.webContents.send("settings:get", store.get("settings"));
 })
 
@@ -135,10 +179,10 @@ app.on('window-all-closed', () => {
   }
 })
 
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createMainWindow()
-  }
-})
+// app.on('activate', () => {
+//   if (BrowserWindow.getAllWindows().length === 0) {
+//     createMainWindow()
+//   }
+// })
 
 app.allowRendererProcessReuse = true

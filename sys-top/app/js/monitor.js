@@ -9,18 +9,49 @@ const notifier = require("node-notifier");
 
 const si = require("systeminformation");
 
+// initalizing socket io connection with server
+const socket = io('http://localhost:5500')
+
 let cpuOverload;
 let alertFreq;
 let physicalCpuCount;
+
+let memFree;
+let cpuUsage;
+let cpuFree;
+let memUsage;
+let compName;
+let cpuModel;
+let totalMem;
+let uptime;
+
+const sendData = () => {
+  /* 
+  * stackoverflow.com/questions/10600496/sending-messages-client-server-client-on-socket-io-on-node-js/10600926
+  * this explains how we send and recieve data back and forth from the server
+  */
+  socket.emit('data', {
+    compName,
+    totalMem,
+    cpuUsage,
+    cpuFree,
+    cpuModel,
+    memUsage,
+    memFree,
+    uptime,
+  });
+  console.log("data emitted")
+} 
 
 let setCpuModel = async () => {
   try {
     const data = await si.cpu();
     physicalCpuCount = data.physicalCores;
+    cpuModel = cpu.model();
     // set cpu model
     document.getElementById(
       "cpu-model"
-    ).innerText = `${cpu.model()}\n ${physicalCpuCount} Cores/ ${cpu.count()} Threads `;
+    ).innerText = `${cpuModel}\n ${physicalCpuCount} Cores/ ${cpu.count()} Threads `;
   } catch (e) {
     console.log(e);
   }
@@ -65,11 +96,18 @@ setCpuModel();
  */
 setInterval(() => {
   // toFixed method: https://www.w3schools.com/JSREF/jsref_tofixed.asp
-   si.mem().then((data) => 
-   {console.log(data.free/(1000*1000*100))});
+  //  si.mem().then((data) => 
+  //  {console.log(data.free/(1000*1000*100))});
 
     // mem usage
     mem.info().then((info) => {
+      memUsage = `${(100 - info.freeMemPercentage).toFixed(2)}% | ${(
+        info.usedMemMb / 1024
+      ).toFixed(2)}GB`;
+      memFree = `${info.freeMemPercentage.toFixed(2)}% | ${(
+        info.freeMemMb / 1000
+      ).toFixed(2)}GB`;
+
       document.getElementById("mem-usage").innerText = `${
         (100 - info.freeMemPercentage).toFixed(2)
       }% | ${(info.usedMemMb/1024).toFixed(2)}GB`;
@@ -78,6 +116,7 @@ setInterval(() => {
 
   // cpu usage
   cpu.usage().then((info) => {
+    cpuUsage = `${info.toFixed(2)} %`;
     document.getElementById("cpu-usage").innerText = `${info.toFixed(2)} %`;
     // sets the progress bar
     document.querySelector("#cpu-progress").style.width = `${info}%`;
@@ -101,16 +140,19 @@ setInterval(() => {
   });
   // cpu free
   cpu.free().then((info) => {
+    cpuFree = `${info.toFixed(2)} %`;
     document.getElementById("cpu-free").innerText = `${info.toFixed(2)} %`;
   });
   // uptime
-  document.getElementById("sys-uptime").innerText = convertSecondsToDHMS(
-    os.uptime()
-  );
+  uptime = convertSecondsToDHMS(os.uptime());
+  document.getElementById("sys-uptime").innerText = uptime;
+
+  sendData();
 }, 2000);
 
 //computer name
 document.getElementById("comp-name").innerText = os.hostname();
+compName = os.hostname();
 
 // os
 document.getElementById("os").innerText = `${os.type()} ${os.arch()}`;
@@ -118,7 +160,7 @@ document.getElementById("os").innerText = `${os.type()} ${os.arch()}`;
 // total memory
 // it returns a promise for which we need to extract the info
 mem.info().then((info) => {
-  const totalMem = info.totalMemMb / 1024
+  totalMem = info.totalMemMb / 1024
   totalMem.toFixed(2)
   document.getElementById("mem-total").innerText = `${totalMem}GB`;
 });

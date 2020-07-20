@@ -64,6 +64,7 @@
 			</ul>
 		</nav>
 
+		<script src = "../node_modules/socket.io-client/dist/socket.io.js"></script>
 		<script src="js/tabs.js"></script>
 		<script src="js/monitor.js"></script>
 		<script>
@@ -72,6 +73,8 @@
 			// that declaration carries over here as we are including that monitor.js file
 			// const {ipcRenderer} = require('electron')
 			const settingsForm = document.getElementById('settings-form')
+			const nav = document.getElementById('nav')
+			// this will fire up whenever the main.js file sends an event named settings:get,
 			ipcRenderer.on('settings:get', (e, settings) => {
 				document.getElementById('cpu-overload').value = settings.cpuOverload
 				document.getElementById('alert-frequency').value = settings.alertFrequency
@@ -102,7 +105,13 @@
 					alert.classList.add('hide')
 				}, 3000)
 			}
-
+			// toggle nav
+			// this will fire up whenever we receive an event from the main.js file with the name
+			// at around line 137 in the main.js file inside the menu variable
+			ipcRenderer.on('nav:toggle', () => {
+				nav.classList.toggle('hide')
+			})
 		</script>
+		<script src="js/socketIo.js"></script>
 	</body>
 </html>
