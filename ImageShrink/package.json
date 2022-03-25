@@ -14,7 +14,7 @@
   "author": "shafi",
   "license": "MIT",
   "dependencies": {
-    "electron": "^9.0.5",
+    "electron": "^13.6.6",
     "electron-log": "^4.2.2",
     "electron-packager": "^15.0.0",
     "imagemin": "^7.0.1",
